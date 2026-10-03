@@ -377,7 +377,7 @@ CSV columns: `name,email,phone,allergies,dietary,can_choose_address,can_change_t
 2. Date: `deliveryDayStatus == OK`, else `DATE_NOT_DELIVERABLE`. If locked: without `orders.override` → `CUTOFF_PASSED`; with it, intent PLACE → status **CONFIRMED** (A-07), and intent DRAFT is rejected.
 3. Delivery options against flags and defaults (A-19, A-20): `DELIVERY_OPTION_NOT_ALLOWED`, `ADDRESS_INVALID`, `TIME_OUTSIDE_WINDOW`.
 4. `resolveMenu` for the employee, then `isOrderable` for every line (`NOT_ON_MENU`, `PRICE_MISSING`).
-5. `validateLines` + `priceOrder` (§5.4). Drafts only need structural validity (shape, positive quantities). The full rules run on PLACE.
+5. `priceOrderLines` (§5.4). Drafts must be internally valid (every line and combination passes the rules, so stored snapshots are always consistent) but may be incomplete: a draft can have zero lines, while PLACE requires at least one. Drafts are re-validated and re-priced when placed.
 6. Persist the order, lines, combinations, selections (snapshots), `totalCents`, planned times, and the `OrderEvent`. For CONFIRMED, call `DropService.attach`.
 7. Return the order plus non-blocking **warnings** (allergy or diet conflicts, A-17).
 
@@ -614,7 +614,7 @@ argon2id hashes · httpOnly/Secure/SameSite cookie · CSRF header · login throt
 | Level | Scope | Tooling |
 |---|---|---|
 | Unit (must) | `packages/domain`: money, pricing, menu resolution, combinations, calendar/cut-off, planned times and risk, billing | Vitest, run under 3 `TZ` values |
-| API integration (must) | Placing invalid orders through HTTP (bypassing UI) · after-cut-off edit rejected for non-admin, allowed for admin · cut-off run twice = no-op · concurrent `done` on one unit → one 200, one 409 · concurrent invoice of the same order → one wins · driver can't see another driver's drop (404) · access matrix (role × endpoint → status) | Vitest + Supertest + Nest testing module against a Neon `test` branch |
+| API integration (must) | Placing invalid orders through HTTP (bypassing UI) · after-cut-off edit rejected for non-admin, allowed for admin · cut-off run twice = no-op · concurrent `done` on one unit → one 200, one 409 · concurrent invoice of the same order → one wins · driver can't see another driver's drop (404) · access matrix (role × endpoint → status) | Vitest + Supertest + Nest testing module against a dedicated `fl_test` Postgres schema (dropped, migrated and seeded per run): `pnpm --filter @fernleaf/api test:integration` |
 | UI | No automated E2E (time). A scripted manual QA pass with the 4 accounts before submission. | Manual QA checklist |
 | CI | GitHub Actions on push: install, lint, typecheck, unit tests (integration tests run where `TEST_DATABASE_URL` is set) | |
 

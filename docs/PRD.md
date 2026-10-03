@@ -187,7 +187,7 @@ Priority tags come from the assignment: **M** = Must, **S** = Should, **C** = Co
 |---|---|---|---|
 | ORD-01 | M | Staff create an order for an employee: choose a delivery date → see that employee's menu → add dishes with valid option choices → choose address, time and packaging where the employee is allowed to → see the price breakdown per line and the order total → place it. | A guided form implements the flow. The breakdown comes from the server's **quote** endpoint (the same pricing code that stores the order). |
 | ORD-02 | M | **Every rule is validated on the server**, not only in the form. | Placing an invalid order via the API (bypassing the UI) fails with actionable, field-addressed errors. API-level tests prove this. |
-| ORD-03 | M | Staff can save an order as a **draft**. | Drafts are saved with partial validation (structure only) and fully validated when placed. |
+| ORD-03 | M | Staff can save an order as a **draft**. | Drafts may be incomplete (no dishes yet) but what they contain must be valid; they are re-validated and re-priced when placed. |
 | ORD-04 | M | Statuses: Draft → Placed → Confirmed → Delivered, plus Cancelled and Rejected. | State machine in TRD §7. Invalid transitions return `INVALID_TRANSITION`. |
 | ORD-05 | M | Before the cut-off, Draft and Placed orders can be edited and cancelled. After the cut-off they cannot, except by an admin. | Non-admin edit or cancel after cut-off → `CUTOFF_PASSED`. Admin can, via the override permission (A-07). |
 | ORD-06 | M | Searchable, filterable, **server-paginated** order list. Filters at least: delivery-date range, status, company, invoiced yes/no. | Filters and search (order number, employee name or email, company) run in SQL. Page size ≤ 100. Filter state lives in the URL. |
