@@ -9,3 +9,4 @@ export * from './menu';
 export * from './combinations';
 export * from './schedule';
 export * from './billing';
+export * from './catalogue';

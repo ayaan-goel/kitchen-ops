@@ -8,3 +8,4 @@ export * from './schemas/ordering-dto';
 export * from './schemas/kitchen-dto';
 export * from './schemas/dispatch-dto';
 export * from './schemas/billing-dto';
+export * from './schemas/catalogue-dto';

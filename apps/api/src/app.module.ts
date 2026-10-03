@@ -15,6 +15,7 @@ import { CutoffModule } from './modules/cutoff/cutoff.module';
 import { DispatchModule } from './modules/dispatch/dispatch.module';
 import { FilesModule } from './modules/files/files.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { CatalogueModule } from './modules/catalogue/catalogue.module';
 import { KitchenModule } from './modules/kitchen/kitchen.module';
 import { OrderingModule } from './modules/ordering/ordering.module';
 import { SettingsModule } from './modules/settings/settings.module';
@@ -56,6 +57,7 @@ import { MetaController } from './modules/meta/meta.controller';
     CutoffModule,
     OrderingModule,
     KitchenModule,
+    CatalogueModule,
   ],
   controllers: [HealthController, MetaController],
   providers: [
