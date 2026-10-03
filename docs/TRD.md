@@ -478,8 +478,20 @@ Scope check on every call: `drop.driverId === user.id && drop.deliveryDate === t
 | POST | `/api/billing/invoices/:id/mark-paid` | `billing.manage` | `{ paidAt?, reference? }`. Compare-and-set `ISSUED → PAID`. |
 | POST | `/api/orders/:id/adjustments` | `billing.manage` | `{ amountCents (< 0 credit, > 0 debit), reason, note }`. Credits bounded by the billed amount. |
 
-Invoice creation (one transaction): verify every order belongs to the company, is billable and has no invoice line, and every adjustment belongs to the company and is pending. Snapshot billing contact. Create lines with `amountCents` = order `totalCents` or adjustment amount. `totalCents = Σ lines`. Add an `INVOICED` event on each order. A `P2002` on `InvoiceLine.orderId` → 409 `ALREADY_INVOICED` and full rollback.
-Cancel or reject of an invoiced order calls `BillingService.creditOnVoid(order)` **inside the same transaction** (A-32).
+Invoice creation (one transaction):
+1. Lock the selected orders and adjustments: `SELECT … ORDER BY id FOR UPDATE`. The fixed order means two invoices can't deadlock.
+2. Under the lock, verify every order belongs to the company, is billable and has no invoice line, and every adjustment belongs to the company and is pending. Another company's or a non-billable item → 422 with an issue path (`orderIds[i]`). An item that is already invoiced → 409 `ALREADY_INVOICED`.
+3. Snapshot the billing contact. Create lines with `amountCents` = the order's `totalCents` or the adjustment amount. `totalCents = Σ lines` (it may be negative: a credit note, A-33). The period is the min/max delivery date.
+4. Add an `INVOICED` event and **`version + 1`** on every order touched. A concurrent edit, cancel or delivery override then fails its version check and re-reads.
+5. A `P2002` on `InvoiceLine.orderId/adjustmentId` → 409 `ALREADY_INVOICED` (belt and braces).
+
+Mark paid takes `paidOn` (a kitchen date, default today; not in the future, not before the issue date) and an optional `reference`. A past date is stored at 12:00 kitchen time.
+
+Cancel/reject calls `BillingService.settleOnVoid` **inside the same transaction** (A-32), with a status + version compare-and-set on the order. It brings the order's net charge back to zero:
+- Invoiced → a credit for the net billed amount (`CANCELLED_/REJECTED_AFTER_INVOICE`).
+- Not invoiced but carrying adjustments → the opposite entry (`OTHER`), so a pending credit can't pay out for an order that was never billed.
+
+Manual adjustments (`POST /orders/:id/adjustments`, reasons `SHORT_DELIVERY | PRICE_CORRECTION | OTHER`) are only allowed on CONFIRMED/DELIVERED orders. They lock the order row, bound credits with `checkAdjustment` (base = the invoiced amount, else the order total), and bump `version`.
 
 ### 6.15 Settings (SET)
 | Method | Path | Perm | Notes |

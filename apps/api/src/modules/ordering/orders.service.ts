@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  cancellationCredit,
   dbDate,
   fromDbDate,
   type PricedLine,
@@ -27,6 +26,7 @@ import { NotFound, RuleViolation, StateConflict } from '../../common/errors/doma
 import { PrismaService } from '../../common/prisma/prisma.service';
 import type { OrderStatus, Prisma } from '../../generated/prisma/client';
 import { CutoffService } from '../cutoff/cutoff.service';
+import { BillingService } from '../billing/billing.service';
 import { DropService } from '../dispatch/drop.service';
 import { PlatformSettingsService } from '../settings/platform-settings.service';
 import { ORDER_DETAIL_INCLUDE, ORDER_LIST_SELECT, toOrderDetail, toOrderListItem } from './order.mapper';
@@ -102,6 +102,7 @@ export class OrdersService {
     private readonly pipeline: OrderPipelineService,
     private readonly cutoff: CutoffService,
     private readonly drops: DropService,
+    private readonly billing: BillingService,
   ) {}
 
   // ───────────────────────── Quote ─────────────────────────
@@ -386,8 +387,9 @@ export class OrdersService {
 
     const now = this.clock.now();
     await this.prisma.$transaction(async (tx) => {
+      // Version CAS too: an invoice or adjustment written meanwhile changes what must be credited.
       const updated = await tx.order.updateMany({
-        where: { id, status: order.status },
+        where: { id, status: order.status, version: order.version },
         data: {
           status: target,
           statusReason: reason,
@@ -399,25 +401,20 @@ export class OrdersService {
       await tx.orderEvent.create({ data: { orderId: id, type: target, actorId: actor.id, at: now, data: { reason } } });
       if (order.status === 'CONFIRMED') await this.drops.detach(tx, id);
 
-      // Already invoiced: invoices never change; credit the net billed amount on the next invoice (A-32).
-      if (order.invoiceLine) {
-        const credit = cancellationCredit(order.invoiceLine.amountCents, order.adjustments.map((a) => a.amountCents));
-        if (credit !== 0) {
-          await tx.billingAdjustment.create({
-            data: {
-              companyId: order.companyId,
-              orderId: id,
-              amountCents: credit,
-              reason: target === 'CANCELLED' ? 'CANCELLED_AFTER_INVOICE' : 'REJECTED_AFTER_INVOICE',
-              note: reason,
-              createdById: actor.id,
-            },
-          });
-          await tx.orderEvent.create({
-            data: { orderId: id, type: 'ADJUSTMENT_ADDED', actorId: actor.id, at: now, data: { amountCents: credit } },
-          });
-        }
-      }
+      // Invoices never change: credit what was billed on the next invoice (A-32).
+      await this.billing.settleOnVoid(
+        tx,
+        {
+          id,
+          companyId: order.companyId,
+          invoicedCents: order.invoiceLine?.amountCents ?? null,
+          adjustmentsCents: order.adjustments.map((a) => a.amountCents),
+        },
+        target,
+        reason,
+        actor.id,
+        now,
+      );
     });
     return this.detail(id);
   }
