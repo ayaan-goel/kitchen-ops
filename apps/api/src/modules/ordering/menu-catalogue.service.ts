@@ -30,7 +30,8 @@ export interface CompanyMenu {
   tagNames: Map<string, string>;
 }
 
-const TTL_MS = 10_000;
+// Catalogue/menu/price edits call invalidate(); the TTL is only a safety net.
+const TTL_MS = 5 * 60_000;
 
 /**
  * Loads the catalogue, menu and price lists and resolves the menu for one company through the

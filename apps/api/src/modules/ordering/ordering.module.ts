@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { LookupsController } from './lookups.controller';
 import { MenuCatalogueService } from './menu-catalogue.service';
 import { OrderPipelineService } from './order-pipeline.service';
 import { OrderingController } from './ordering.controller';
@@ -7,7 +8,7 @@ import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 
 @Module({
-  controllers: [OrderingController, OrdersController],
+  controllers: [OrderingController, OrdersController, LookupsController],
   providers: [MenuCatalogueService, OrderPipelineService, OrderingService, OrdersService],
   exports: [MenuCatalogueService, OrderPipelineService, OrdersService],
 })

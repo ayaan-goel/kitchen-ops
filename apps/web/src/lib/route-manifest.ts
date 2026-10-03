@@ -11,6 +11,7 @@ import {
   Receipt,
   Settings,
   Tags,
+  TimerReset,
   Truck,
   UserCog,
   Users,
@@ -43,6 +44,7 @@ export const ROUTES: AppRoute[] = [
   { href: '/employees', label: 'Employees', icon: Users, permission: 'employees.read', group: 'Customers' },
   { href: '/billing', label: 'Billing', icon: Receipt, permission: 'billing.read', group: 'Finance' },
   { href: '/staff', label: 'Staff', icon: UserCog, permission: 'staff.read', group: 'Admin' },
+  { href: '/settings/cutoffs', label: 'Cut-off console', icon: TimerReset, permission: 'cutoff.run', group: 'Admin' },
   { href: '/settings', label: 'Settings', icon: Settings, permission: 'settings.read', group: 'Admin' },
 ];
 

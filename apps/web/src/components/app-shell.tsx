@@ -26,6 +26,10 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { data: me } = useMe();
   const visible = ROUTES.filter((r) => hasPermission(me, r.permission));
+  // The most specific matching entry is the active one (e.g. /settings/cutoffs, not /settings).
+  const activeHref = visible
+    .filter((r) => pathname === r.href || pathname.startsWith(`${r.href}/`))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
   return (
     <nav className="space-y-5 px-3 py-4" aria-label="Main">
       {ROUTE_GROUPS.map((group) => {
@@ -35,7 +39,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           <div key={group} className="space-y-1">
             <p className="px-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">{group}</p>
             {items.map((r) => {
-              const active = pathname === r.href || pathname.startsWith(`${r.href}/`);
+              const active = r.href === activeHref;
               return (
                 <Link
                   key={r.href}
