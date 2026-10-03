@@ -1,0 +1,34 @@
+# Render Blueprint for the API (docs/ARCHITECTURE.md §10). New → Blueprint → this repo.
+# DATABASE_URL / DIRECT_URL are entered in the dashboard (never committed).
+services:
+  - type: web
+    name: fernleaf-api
+    runtime: node
+    region: singapore
+    plan: free
+    autoDeploy: true
+    # NODE_ENV=production would make pnpm skip devDependencies (TypeScript, Prisma CLI) at build time.
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm turbo run build --filter=@fernleaf/api...
+    startCommand: pnpm --filter @fernleaf/api start:prod
+    healthCheckPath: /api/health/live
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      - key: KITCHEN_TZ
+        value: Asia/Kolkata
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: DEMO_DATA_ENABLED
+        value: "true"
+      - key: SESSION_TTL_HOURS
+        value: "12"
+      - key: LOG_LEVEL
+        value: info
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
