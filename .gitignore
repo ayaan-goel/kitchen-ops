@@ -1,0 +1,39 @@
+# ── Private working brain — never committed (decision ADR-017, see vault/01 Agent Protocol.md) ──
+/vault/
+/AGENTS.md
+/CLAUDE.md
+/.claude/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Builds & caches
+dist/
+build/
+out/
+.next/
+.turbo/
+.vercel/
+coverage/
+*.tsbuildinfo
+
+# Prisma generated client (regenerated on install/build)
+**/src/generated/
+
+# Env & secrets (commit only *.env.example)
+.env
+.env.*
+!.env.example
+
+# Logs & OS noise
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
