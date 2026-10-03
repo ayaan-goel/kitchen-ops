@@ -17,6 +17,7 @@ out/
 .vercel/
 coverage/
 *.tsbuildinfo
+next-env.d.ts
 
 # Prisma generated client (regenerated on install/build)
 **/src/generated/
