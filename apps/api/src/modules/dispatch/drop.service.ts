@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { fromDbDate, isOnTime } from '@fernleaf/domain';
+import { isOnTime } from '@fernleaf/domain';
 import { type DropStage, formatOrderNumber } from '@fernleaf/shared';
 import { NotFound, RuleViolation, StateConflict } from '../../common/errors/domain-error';
-import type { Prisma } from '../../generated/prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 
 type Tx = Prisma.TransactionClient;
 
@@ -21,70 +21,43 @@ const STAGE_LABEL: Record<DropStage, string> = {
 export class DropService {
   /**
    * Puts confirmed orders into their drops (creating drops as needed, with the company's default
-   * driver). Batched by drop key so cut-off processing of a busy day stays a handful of queries.
+   * driver). Set-based: a fixed handful of queries however many orders a cut-off confirms.
    */
   async attachMany(tx: Tx, orderIds: readonly string[], actorId: string | null): Promise<void> {
     if (orderIds.length === 0) return;
-    const orders = await tx.order.findMany({
-      where: { id: { in: [...orderIds] } },
-      select: {
-        id: true,
-        dropId: true,
-        deliveryDate: true,
-        deliveryTime: true,
-        deliveryAt: true,
-        companyId: true,
-        addressId: true,
-        company: { select: { defaultDriverId: true } },
-      },
+    const ids = [...orderIds];
+    const sameKey = Prisma.sql`d."deliveryDate" = o."deliveryDate" AND d."companyId" = o."companyId" AND d."addressId" = o."addressId" AND d."deliveryTime" = o."deliveryTime"`;
+
+    // 1. Create the missing drops, one per (date, company, address, time).
+    await tx.$executeRaw`
+      INSERT INTO "Drop" ("id", "deliveryDate", "companyId", "addressId", "deliveryTime", "deliveryAt", "driverId", "updatedAt")
+      SELECT gen_random_uuid(), k."deliveryDate", k."companyId", k."addressId", k."deliveryTime", k."deliveryAt", c."defaultDriverId", now()
+        FROM (SELECT DISTINCT ON ("deliveryDate", "companyId", "addressId", "deliveryTime") "deliveryDate", "companyId", "addressId", "deliveryTime", "deliveryAt"
+                FROM "Order" WHERE "id" = ANY(${ids}::uuid[])) k
+        JOIN "Company" c ON c."id" = k."companyId"
+      ON CONFLICT ("deliveryDate", "companyId", "addressId", "deliveryTime") DO NOTHING`;
+
+    // 2. An order can't join a drop that has already left (A-27).
+    const departed = await tx.$queryRaw<{ id: string }[]>`
+      SELECT d."id" FROM "Order" o JOIN "Drop" d ON ${sameKey}
+       WHERE o."id" = ANY(${ids}::uuid[]) AND d."stage" IN ('OUT_FOR_DELIVERY', 'DELIVERED') AND o."dropId" IS DISTINCT FROM d."id"
+       LIMIT 1`;
+    if (departed.length > 0) {
+      throw new StateConflict('DROP_DEPARTED', 'The delivery for that company, address and time has already left. Choose a different delivery time.');
+    }
+
+    // 3. Join, then put any dispatch-ready drop that gained a not-yet-ready order back to pending.
+    const joined = await tx.$queryRaw<{ orderId: string; dropId: string }[]>`
+      UPDATE "Order" o SET "dropId" = d."id"
+        FROM "Drop" d
+       WHERE o."id" = ANY(${ids}::uuid[]) AND ${sameKey} AND o."dropId" IS DISTINCT FROM d."id"
+   RETURNING o."id" AS "orderId", d."id" AS "dropId"`;
+    if (joined.length === 0) return;
+    const dropIds = [...new Set(joined.map((j) => j.dropId))];
+    await tx.$executeRaw`UPDATE "Drop" SET "stage" = 'PENDING', "dispatchReadyAt" = NULL, "updatedAt" = now() WHERE "id" = ANY(${dropIds}::uuid[]) AND "stage" = 'DISPATCH_READY'`;
+    await tx.orderEvent.createMany({
+      data: joined.map((j) => ({ orderId: j.orderId, type: 'DROP_ASSIGNED' as const, actorId, data: { dropId: j.dropId } })),
     });
-
-    const groups = new Map<string, typeof orders>();
-    for (const order of orders) {
-      const key = `${fromDbDate(order.deliveryDate)}|${order.companyId}|${order.addressId}|${order.deliveryTime}`;
-      groups.set(key, [...(groups.get(key) ?? []), order]);
-    }
-
-    for (const members of groups.values()) {
-      const first = members[0]!;
-      const drop = await tx.drop.upsert({
-        where: {
-          deliveryDate_companyId_addressId_deliveryTime: {
-            deliveryDate: first.deliveryDate,
-            companyId: first.companyId,
-            addressId: first.addressId,
-            deliveryTime: first.deliveryTime,
-          },
-        },
-        create: {
-          deliveryDate: first.deliveryDate,
-          companyId: first.companyId,
-          addressId: first.addressId,
-          deliveryTime: first.deliveryTime,
-          deliveryAt: first.deliveryAt,
-          driverId: first.company.defaultDriverId,
-        },
-        update: {},
-      });
-
-      if (drop.stage === 'OUT_FOR_DELIVERY' || drop.stage === 'DELIVERED') {
-        throw new StateConflict(
-          'DROP_DEPARTED',
-          'The delivery for that company, address and time has already left. Choose a different delivery time.',
-        );
-      }
-      if (drop.stage === 'DISPATCH_READY') {
-        // A not-yet-ready order joins: the drop must be checked again (A-27).
-        await tx.drop.update({ where: { id: drop.id }, data: { stage: 'PENDING', dispatchReadyAt: null } });
-      }
-
-      const joining = members.filter((m) => m.dropId !== drop.id).map((m) => m.id);
-      if (joining.length === 0) continue;
-      await tx.order.updateMany({ where: { id: { in: joining } }, data: { dropId: drop.id } });
-      await tx.orderEvent.createMany({
-        data: joining.map((orderId) => ({ orderId, type: 'DROP_ASSIGNED' as const, actorId, data: { dropId: drop.id } })),
-      });
-    }
   }
 
   /** Removes an order from its drop; deletes the drop if it is left empty and has not left yet. */

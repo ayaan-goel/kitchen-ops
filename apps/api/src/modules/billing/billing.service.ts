@@ -272,15 +272,15 @@ export class BillingService {
           ]);
           this.assertInvoiceable(input.companyId, orderIds, adjustmentIds, orders, adjustments);
 
-          const lines: Prisma.InvoiceLineCreateWithoutInvoiceInput[] = [
+          const lines: Omit<Prisma.InvoiceLineCreateManyInput, 'invoiceId'>[] = [
             ...orders.map((o) => ({
-              order: { connect: { id: o.id } },
+              orderId: o.id,
               description: `${formatOrderNumber(o.number)} · ${o.employee.name}`,
               deliveryDate: o.deliveryDate,
               amountCents: o.totalCents,
             })),
             ...adjustments.map((a) => ({
-              adjustment: { connect: { id: a.id } },
+              adjustmentId: a.id,
               description: `${ADJUSTMENT_REASON_LABELS[a.reason]} · ${formatOrderNumber(a.order.number)}${a.note ? ` · ${a.note}` : ''}`,
               deliveryDate: a.order.deliveryDate,
               amountCents: a.amountCents,
@@ -303,10 +303,11 @@ export class BillingService {
               },
               notes: input.notes,
               createdById: actor.id,
-              lines: { create: lines },
             },
             select: { id: true, number: true },
           });
+          // Lines in one insert after the invoice row (the unique indexes still stop a double invoice).
+          await tx.invoiceLine.createMany({ data: lines.map((l) => ({ ...l, invoiceId: invoice.id })) });
 
           // Timeline + version bump on every order touched (so a concurrent edit or cancel re-reads).
           const touched = [...new Set([...orderIds, ...(await this.orderIdsOf(tx, adjustmentIds))])];

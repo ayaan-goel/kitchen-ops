@@ -504,9 +504,21 @@ Manual adjustments (`POST /orders/:id/adjustments`, reasons `SHORT_DELIVERY | PR
 
 ### 6.17 Demo data (DEMO, A-40)
 - `pnpm db:seed` (idempotent): roles, staff (the 4 test accounts plus extra drivers and cooks), reference data, catalogue, tiers and prices, menu, companies, employees, kitchen settings.
-- `DemoService.ensure(now)`: for each kitchen day in `[today − 21, today + 7]` without a `DemoDay` marker, generate orders **through the real domain functions** (validation + pricing snapshots) as PLACED/DRAFT. Then call `CutoffService.ensureProcessed()`, so past and locked dates are confirmed or cancelled by the real processor. Then run the **autopilot**: demo orders (`createdById IS NULL`) with no human events get completed for past dates (units done, drops delivered, mostly on time, a few late, a few rejected or cancelled) and progressed for today by the clock. Older weeks get invoices (some paid).
-- Triggers: on boot (async), a daily timer at 00:05 kitchen time, lazily on the first authenticated request of a new kitchen day, and `POST /api/admin/demo/refresh` (`settings.manage`).
-- Guarantees: driver@test.com has drops **today**. One date carries ≈ 400 orders (KIT-12). All six statuses exist.
+- `DemoService.ensure()`: for each date in `[today − 14, today + 7]` without a `DemoDay` marker, generate orders with a per-date seeded PRNG.
+  - **Validation and pricing:** orders go through the real domain functions (`resolveMenu` via `MenuCatalogueService`, `priceOrderLines`) and respect employee flags.
+  - **Volume:** about 140 orders per working day across six companies (Wednesdays ×3 ≈ 400, KIT-12); 7-day sites only at weekends.
+  - **Insert:** in bulk (`createMany`, explicit ids), as PLACED, or DRAFT (6 % for locked dates, 18 % for open dates).
+  - **Confirmation:** `CutoffService.catchUp()` runs the **real cut-off processor**, which confirms, cancels drafts and attaches drops. Confirmation timestamps are then back-dated to each date's real cut-off.
+- **Autopilot** (set-based SQL, idempotent):
+  - Choices use `hashtext(id)`, not `random()`, so re-runs change nothing.
+  - It only touches demo orders (`createdById IS NULL`) with no event by a human.
+  - Past dates: every unit done (≈ 5 % a little late), drops delivered (≈ 10 % late by 5–24 min), ≈ 1 % rejected and ≈ 1 % cancelled.
+  - Today, by the clock: units due within 30 min done (≈ 3 % left as LATE), within 90 min started; drops dispatch-ready / out / delivered as their times pass.
+  - **driver@test.com's drops today stop at dispatch-ready**, so a reviewer can act as the driver.
+- **Billing history:** weekly invoices through `BillingService.createInvoice` for demo orders delivered more than 7 days ago, paid when older than 14 days, plus one pending SHORT_DELIVERY credit.
+- **Triggers** (gated by `DEMO_DATA_ENABLED`): 3 s after boot, daily at 00:05 kitchen time, signed-in requests (non-blocking, throttled to once per 5 min), and `POST /api/admin/demo/refresh` (`settings.manage`).
+- `pnpm --filter @fernleaf/api demo:reset -- --yes` wipes operational data (orders, drops, invoices) and restarts numbering. The base seed stays.
+- Guarantees (integration-tested with a fixed clock): all six statuses exist; the past is finished; driver@test.com has drops today; a second run is a no-op; the next day adds exactly one date.
 
 ### 6.18 Meta and health
 | Method | Path | Perm | Notes |

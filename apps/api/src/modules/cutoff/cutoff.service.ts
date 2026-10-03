@@ -60,6 +60,13 @@ export class CutoffService implements OnApplicationBootstrap {
     await this.inflight;
   }
 
+  /** Processes every due date now, ignoring the in-memory "nothing due before" shortcut (demo generator). */
+  async catchUp(trigger: CutoffTrigger = 'SCHEDULED'): Promise<void> {
+    await this.inflight;
+    this.nextDueAt = null;
+    await this.ensureProcessed(trigger);
+  }
+
   /** Cheap check for the 60 s scheduler tick: no DB access unless something is due. */
   isDue(): boolean {
     return !this.nextDueAt || this.clock.now() >= this.nextDueAt;
