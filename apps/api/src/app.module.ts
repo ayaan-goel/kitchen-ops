@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { AuthGuard } from './common/auth/auth.guard';
@@ -10,6 +11,10 @@ import { PrismaModule } from './common/prisma/prisma.module';
 import { APP_ENV, AppConfigModule } from './config/config.module';
 import type { AppEnv } from './config/env';
 import { AuthModule } from './modules/auth/auth.module';
+import { CutoffModule } from './modules/cutoff/cutoff.module';
+import { DispatchModule } from './modules/dispatch/dispatch.module';
+import { OrderingModule } from './modules/ordering/ordering.module';
+import { SettingsModule } from './modules/settings/settings.module';
 import { HealthController } from './modules/health/health.controller';
 import { MetaController } from './modules/meta/meta.controller';
 
@@ -37,9 +42,14 @@ import { MetaController } from './modules/meta/meta.controller';
       }),
     }),
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 300 }]),
+    ScheduleModule.forRoot(),
     ClockModule,
     PrismaModule,
     AuthModule,
+    SettingsModule,
+    DispatchModule,
+    CutoffModule,
+    OrderingModule,
   ],
   controllers: [HealthController, MetaController],
   providers: [
