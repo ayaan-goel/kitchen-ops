@@ -204,6 +204,11 @@ export class OrdersService {
     if (isConfirmed && !canOverride) {
       throw new RuleViolation('CUTOFF_PASSED', 'This order is confirmed (cut-off passed). Only an admin can change it.');
     }
+    // A-18: after the employee moved company, orders placed under the old company can only be cancelled.
+    const employee = await this.prisma.employee.findUnique({ where: { id: existing.employeeId }, select: { companyId: true } });
+    if (employee && employee.companyId !== existing.companyId) {
+      throw new RuleViolation('INVALID_TRANSITION', 'This employee has moved to another company, so this order can only be cancelled.');
+    }
     if (existing.status !== 'DRAFT' && input.intent === 'DRAFT') {
       throw new StateConflict('INVALID_TRANSITION', 'A placed order can’t go back to draft.');
     }
