@@ -13,6 +13,7 @@ import type { AppEnv } from './config/env';
 import { AuthModule } from './modules/auth/auth.module';
 import { CutoffModule } from './modules/cutoff/cutoff.module';
 import { DispatchModule } from './modules/dispatch/dispatch.module';
+import { KitchenModule } from './modules/kitchen/kitchen.module';
 import { OrderingModule } from './modules/ordering/ordering.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { HealthController } from './modules/health/health.controller';
@@ -50,6 +51,7 @@ import { MetaController } from './modules/meta/meta.controller';
     DispatchModule,
     CutoffModule,
     OrderingModule,
+    KitchenModule,
   ],
   controllers: [HealthController, MetaController],
   providers: [

@@ -5,3 +5,4 @@ export * from './schemas/common';
 export * from './schemas/auth';
 export * from './schemas/orders';
 export * from './schemas/ordering-dto';
+export * from './schemas/kitchen-dto';
