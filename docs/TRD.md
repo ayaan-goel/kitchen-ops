@@ -27,9 +27,9 @@ This document states **how** the PRD gets built: technology choices and why, cro
 | Forms | react-hook-form + `@hookform/resolvers/zod` | Handles the large nested order form well, and reuses the server's schemas | Formik |
 | Tables | TanStack Table (server pagination) + TanStack Virtual for long boards | Headless, works with URL-driven filters | AG Grid |
 | Charts | Recharts (shadcn chart wrappers), used sparingly | Small, honest charts (the brief values figures over charts) | — |
-| Backend | **NestJS** (current major, 11.x) | Mandated. Modules, DI, guards, pipes, interceptors. | — |
+| Backend | **NestJS 11** (CommonJS) | Mandated. Modules, DI, guards, pipes, interceptors. NestJS 12 is ESM-only; 11 avoids ESM/decorator/tooling friction under the deadline. | NestJS 12 |
 | Validation | **Zod 4** schemas in `packages/shared`, custom `ZodValidationPipe` | One definition for web and API, precise error paths | class-validator (duplicated definitions) |
-| ORM | **Prisma** (current major, v7 expected) using the `prisma-client` generator with CJS output for Nest. **Fallback: pin 6.x** if the ESM-first client fights Nest's CommonJS build. | Mandated | — |
+| ORM | **Prisma 7.10** using the `prisma-client` generator with CJS output for Nest and the `@prisma/adapter-pg` driver adapter | Mandated | — |
 | Database | **PostgreSQL** (Neon, region `ap-southeast-1` Singapore) | `DATE` and `timestamptz`, CHECK constraints, partial unique indexes, advisory locks, `SELECT … FOR UPDATE`, arrays | MySQL, SQLite |
 | Time | **Luxon** | Explicit IANA-zone arithmetic, DST-safe wall-clock construction | date-fns-tz, Temporal polyfill |
 | Auth | Email + password, **argon2id** (`@node-rs/argon2`), JWT (`@nestjs/jwt`) in an **httpOnly cookie** | Sessions owned by the API. No third-party dependency at review time. | Auth.js (puts auth logic in Next), Clerk |
@@ -621,10 +621,11 @@ argon2id hashes · httpOnly/Secure/SameSite cookie · CSRF header · login throt
 ## 13. Environments and deployment
 | Env | Web | API | DB | Notes |
 |---|---|---|---|---|
-| Local | `next dev` :3000 (rewrite → :4000) | `nest start --watch` :4000 | Neon branch **`dev`** | Windows 11, Node 24, pnpm. No Docker on the dev machine, hence a cloud dev branch. |
-| Test | — | Vitest + Supertest | Neon branch **`test`** | Reset per run (`prisma migrate reset --force`) |
-| Production | **Vercel** project, root `apps/web`, env `API_URL`, function region `sin1`/`bom1` | **Render** web service (Singapore, free): build `corepack enable && pnpm install --frozen-lockfile && pnpm turbo run build --filter=@fernleaf/api...`, start `pnpm --filter @fernleaf/api start:prod` (= `prisma migrate deploy && node dist/main.js`), health check `/api/health/live` | Neon **`main`** (Singapore) | UptimeRobot pings `/api/health/live` every 5 min |
+| Local | `next dev` :3000 (rewrite → :4000) | `tsc --watch` + `node --watch dist/main.js` :4000 | **The shared Neon database** (Singapore) | Windows 11, Node 24, pnpm. One database for local development and the deployed app (owner's decision). |
+| Test | — | Vitest + Supertest | Same Neon database, **separate Postgres schema** (`?schema=test`) | Integration tests reset only their own schema, never the real tables |
+| Production | **Vercel** project, root `apps/web`, env `API_URL`, function region `sin1`/`bom1` | **Render** web service (Singapore, free): build `corepack enable && pnpm install --frozen-lockfile && pnpm turbo run build --filter=@fernleaf/api...`, start `pnpm --filter @fernleaf/api start:prod` (= `prisma migrate deploy && node dist/main.js`), health check `/api/health/live` | **The shared Neon database** | UptimeRobot pings `/api/health/live` every 5 min |
 
+- **One database for development and the live app.** Local work is visible on the live app, so seeds are idempotent upserts that never wipe data, and destructive commands (`migrate reset`) are only ever run against the test schema.
 - **Migrations** are forward-only. `prisma migrate dev --create-only` generates the SQL, which we hand-edit to add partial indexes and CHECKs (see DB doc §7). Render runs `migrate deploy` on start.
 - **Seeding production:** run `pnpm --filter @fernleaf/api db:seed` once from the dev machine with the production `DATABASE_URL` (Render free has no shell). The rolling demo generator then runs inside the API.
 - **Neon free-tier budget:** the keep-alive endpoint and the scheduler don't touch the DB, so Neon can auto-suspend when nobody is using the app.
