@@ -1,0 +1,54 @@
+// Fernleaf Kitchen — Prisma schema. Full design: docs/DATABASE_MODELS.md
+// Conventions: UUIDv7 ids · money = Int cents · calendar dates = DATE · time of day = Int minutes
+// after midnight in kitchen TZ (Asia/Kolkata) · instants = timestamptz(3).
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DashboardKind {
+  ADMIN
+  KITCHEN
+  DISPATCH
+  DRIVER
+}
+
+// ───────────────────────── Access control ─────────────────────────
+
+model Role {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  key         String        @unique // stable identifier (ADMIN, KITCHEN, ...) — never used in code checks
+  name        String
+  description String        @default("")
+  permissions String[] // permission keys from @fernleaf/shared
+  dashboard   DashboardKind // landing dashboard after sign-in
+  isSystem    Boolean       @default(false)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(3)
+
+  staff StaffUser[]
+}
+
+model StaffUser {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  email          String    @unique // lower-case
+  name           String
+  phone          String?
+  passwordHash   String // argon2id
+  roleId         String    @db.Uuid
+  isActive       Boolean   @default(true)
+  sessionVersion Int       @default(0) // bump to revoke all sessions
+  lastLoginAt    DateTime? @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime  @updatedAt @db.Timestamptz(3)
+
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@index([roleId])
+}
