@@ -114,7 +114,7 @@ function DishCard({ dish, added, onAdd }: { dish: MenuDishDto; added: boolean; o
   );
 }
 
-export function OrderForm({ existing }: { existing?: OrderDetailDto }) {
+export function OrderForm({ existing, initialEmployee }: { existing?: OrderDetailDto; initialEmployee?: EmployeeSearchItemDto }) {
   const router = useRouter();
   const { data: me } = useMe();
   const meta = useMeta().data;
@@ -123,7 +123,7 @@ export function OrderForm({ existing }: { existing?: OrderDetailDto }) {
   const [employee, setEmployee] = useState<EmployeeSearchItemDto | null>(
     existing
       ? { id: existing.employee.id, name: existing.employee.name, email: existing.employee.email, companyId: existing.company.id, companyName: existing.company.name }
-      : null,
+      : (initialEmployee ?? null),
   );
   const [date, setDate] = useState<string | null>(existing?.deliveryDate ?? null);
   const [time, setTime] = useState<string | undefined>(existing?.deliveryTime);
