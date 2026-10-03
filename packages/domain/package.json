@@ -1,0 +1,25 @@
+{
+  "name": "@fernleaf/domain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pure business rules: money, pricing, menu, combinations, calendar/cut-off, schedule, billing",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "lint": "eslint src",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:tz": "node scripts/test-tz.mjs"
+  },
+  "dependencies": {
+    "luxon": "3.7.2"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.7.1",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11"
+  }
+}
