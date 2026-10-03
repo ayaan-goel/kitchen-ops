@@ -1,7 +1,7 @@
 'use client';
 
-import type { OrderDetailDto } from '@fernleaf/shared';
-import { ArrowLeft, Ban, ChefHat, Clock, Loader2, MapPin, Package, Pencil, Send, Truck, XCircle } from 'lucide-react';
+import { ADJUSTMENT_REASON_LABELS, type AdjustmentReason, type OrderDetailDto } from '@fernleaf/shared';
+import { ArrowLeft, Ban, ChefHat, Clock, ReceiptText, Loader2, MapPin, Package, Pencil, Send, Truck, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AdjustmentDialog } from '@/features/billing/adjustment-dialog';
+import { SignedCents } from '@/features/billing/invoice-status-badge';
 import { useForceComplete } from '@/features/kitchen/api';
 import { useOrder, useOrderAction } from '@/features/orders/api';
 import { DeliveryOverrideDialog, ReasonDialog } from '@/features/orders/order-actions';
@@ -134,10 +136,14 @@ export default function OrderDetailPage() {
   const { data: me } = useMe();
   const zone = useMeta().data?.kitchenTimeZone ?? 'Asia/Kolkata';
   const { data: order, isPending, error } = useOrder(id);
+  const [adjusting, setAdjusting] = useState(false);
 
   if (me && !hasPermission(me, 'orders.read')) return <Forbidden />;
   if (isPending) return <Skeleton className="h-96 w-full" />;
   if (error || !order) return <p className="text-sm text-destructive">{error?.message ?? 'Order not found'}</p>;
+
+  const canSeeBilling = hasPermission(me, 'billing.read');
+  const canAdjust = hasPermission(me, 'billing.manage') && (order.status === 'CONFIRMED' || order.status === 'DELIVERED');
 
   const t = (iso: string | null) => (iso ? formatKitchen(iso, zone, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }) : '—');
 
@@ -294,20 +300,35 @@ export default function OrderDetailPage() {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <p>
-                {order.invoice
-                  ? `On ${formatInvoiceNumber(order.invoice.number)} (${order.invoice.status.toLowerCase()})`
-                  : order.status === 'CONFIRMED' || order.status === 'DELIVERED'
-                    ? 'Billable, not invoiced yet'
-                    : 'Not billable'}
+                {order.invoice ? (
+                  canSeeBilling ? (
+                    <Link href={`/billing/invoices/${order.invoice.id}`} className="text-primary hover:underline">
+                      On {formatInvoiceNumber(order.invoice.number)} ({order.invoice.status === 'PAID' ? 'paid' : 'unpaid'})
+                    </Link>
+                  ) : (
+                    `On ${formatInvoiceNumber(order.invoice.number)} (${order.invoice.status === 'PAID' ? 'paid' : 'unpaid'})`
+                  )
+                ) : order.status === 'CONFIRMED' || order.status === 'DELIVERED' ? (
+                  'Billable, not invoiced yet'
+                ) : (
+                  'Not billable'
+                )}
               </p>
               {order.adjustments.map((a) => (
-                <p key={a.id} className="flex justify-between text-xs">
+                <div key={a.id} className="flex justify-between gap-2 text-xs">
                   <span>
-                    {a.reason.replaceAll('_', ' ').toLowerCase()} {a.invoiced ? '(invoiced)' : '(pending)'}
+                    {ADJUSTMENT_REASON_LABELS[a.reason as AdjustmentReason] ?? a.reason} {a.invoiced ? '(invoiced)' : '(next invoice)'}
+                    {a.note && <span className="block text-muted-foreground">{a.note}</span>}
                   </span>
-                  <span className="tabular-nums">{formatCents(a.amountCents)}</span>
-                </p>
+                  <SignedCents cents={a.amountCents} />
+                </div>
               ))}
+              {canAdjust && (
+                <Button variant="outline" size="sm" className="w-full" onClick={() => setAdjusting(true)}>
+                  <ReceiptText className="size-4" /> Add credit or debit
+                </Button>
+              )}
+              {adjusting && <AdjustmentDialog order={order} onClose={() => setAdjusting(false)} />}
               <p className="text-xs text-muted-foreground">
                 Created {t(order.createdAt)} by {order.createdBy ?? 'System (demo data)'}
               </p>
