@@ -11,6 +11,11 @@ export const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   DIRECT_URL: z.string().optional(),
+  /** Only for integration tests: isolate in a separate Postgres schema (never set in prod). */
+  DATABASE_SCHEMA: z
+    .string()
+    .regex(/^[a-z_][a-z0-9_]*$/, 'DATABASE_SCHEMA must be a simple lower-case identifier')
+    .optional(),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(168).default(12),
   KITCHEN_TZ: z

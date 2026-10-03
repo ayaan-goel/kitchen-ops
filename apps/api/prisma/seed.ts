@@ -6,9 +6,9 @@
 import { randomBytes } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { hash } from '@node-rs/argon2';
-import { PrismaPg } from '@prisma/adapter-pg';
 import { applyMultiplierBps } from '@fernleaf/domain';
 import { ALL_PERMISSIONS, type DashboardKind, type Permission } from '@fernleaf/shared';
+import { createPgAdapter } from '../src/common/prisma/prisma.service';
 import { PrismaClient } from '../src/generated/prisma/client';
 import {
   ALLERGENS,
@@ -29,7 +29,7 @@ if (existsSync('.env')) process.loadEnvFile('.env');
 
 const databaseUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error('DATABASE_URL (or DIRECT_URL) is required to seed');
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
+const prisma = new PrismaClient({ adapter: createPgAdapter(databaseUrl, process.env.DATABASE_SCHEMA) });
 
 type IdMap = Map<string, string>;
 

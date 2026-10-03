@@ -8,6 +8,8 @@ export default defineConfig({
   plugins: [swc.vite({ module: { type: 'es6' } })],
   test: {
     include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
+    // Integration tests need a database; they run via `test:integration`.
+    exclude: ['test/integration/**'],
     environment: 'node',
   },
 });
