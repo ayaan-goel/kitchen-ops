@@ -295,7 +295,7 @@ Conventions for all figures:
 | A1 | Today's service | Count of committed orders with delivery date = today, **boxes** = sum of their line quantities, **booked value** = sum of their totals. Today's cancelled/rejected count is shown beside it. | Volume and value of the day at a glance. |
 | A2 | Kitchen progress today | Done units ÷ all units of today's committed orders. Late units now (A-26). | Is the kitchen keeping up? |
 | A3 | Deliveries today | Delivered drops ÷ all drops with delivery date = today. On-time % = on-time delivered drops ÷ delivered drops ("—" if none delivered). | Customer-facing reliability. |
-| A4 | Next cut-off | The nearest delivery date whose cut-off is still in the future: cut-off time, number and value of Placed orders (to be confirmed), number of Drafts (to be auto-cancelled). | Chase drafts before they're cancelled. Anticipate the next day's volume. |
+| A4 | Next cut-off | The nearest delivery date (searching 3 weeks ahead) whose cut-off is still in the future and that hasn't been closed early: cut-off time, number and value of Placed orders (to be confirmed), number of Drafts (to be auto-cancelled). | Chase drafts before they're cancelled. Anticipate the next day's volume. |
 | A5 | Booked value, last 14 days | Sum of committed order totals per delivery date for the 14 delivery dates up to and including today. Cancelled/rejected excluded. | Trend without invented forecasts. |
 | A6 | Receivables | **Unbilled** = sum of totals of committed orders not on any invoice + sum of pending adjustments (all delivery dates, including future confirmed), per company (top 5 + total). **Outstanding** = sum of totals of Issued (unpaid) invoices, their count, and the oldest issue date. | Cash: what still needs invoicing and what's unpaid. |
 | A7 | Catalogue health | Active dishes on the menu with **no effective price** on each tier (count per tier, linking to the tier grid filtered to missing). Companies without an owner or default driver. | Dishes silently missing from a company's menu are a real failure mode (PRICE-05). |
@@ -307,7 +307,7 @@ Not shown: profit or margin (costs are hand-entered estimates and would suggest 
 | K1 | Workload by station | For units of today's committed orders: count and boxes (sum of unit quantities) per station, split into not started / in progress / done. "Unassigned" is its own row. | Who is busiest. Plan staffing. |
 | K2 | Next deadlines | Earliest planned kitchen-ready times among not-done units, grouped by time slot, with the unit count per slot (next 5 slots). | Sequence the work. |
 | K3 | Late and at risk | Not-done units whose planned kitchen-ready time has passed (late) or is within the at-risk window, default 30 min (at risk). | Act now. |
-| K4 | Production summary | Per dish: total boxes and the split by combination (option choices + portion), with station and hot/cold. | The cook list, aggregated across orders. |
+| K4 | Production summary | Per dish: total boxes and the split by combination (option choices + portion), with station and hot/cold. The dashboard shows the top 12 dishes with done/total boxes; the cook list page has everything. | The cook list, aggregated across orders. |
 | K5 | Allergen watch | Unit count per allergen present (dish + chosen options). Units where the employee's declared allergy is present in the unit are flagged separately (should be 0). | Food safety. |
 | K6 | Tomorrow | Units and boxes by station for tomorrow's committed orders. If tomorrow's cut-off hasn't passed yet, shows "Placed so far" labelled provisional. | Overnight prep (marinades, soaking). |
 Not shown: prices, revenue, billing. Draft and Placed orders are excluded from today's figures because they aren't commitments.
@@ -318,7 +318,7 @@ Not shown: prices, revenue, billing. Draft and Placed orders are excluded from t
 | D1 | Drops by stage (today) | Counts of today's drops in: waiting for kitchen (pending, not all orders kitchen-ready) · ready to dispatch (pending, all kitchen-ready) · dispatch ready · out for delivery · delivered. | Flow at a glance. |
 | D2 | Unassigned drops | Today's drops not yet out for delivery that have no driver. | Must be 0 before departure. |
 | D3 | Late and at risk | Drops not yet out for delivery whose planned dispatch-ready time has passed (late) or is within the at-risk window. Plus count of drops delivered late today. | Prioritise the door. |
-| D4 | Driver load | Per driver: today's drops (total / remaining), boxes, next departure time. | Balance assignments. |
+| D4 | Driver load | Per driver: today's drops (total / remaining), boxes, next departure time (earliest planned leave-kitchen time among drops not yet left). Drops without a driver form an "Unassigned" row. | Balance assignments. |
 | D5 | On-time rate | On-time delivered drops ÷ delivered drops, today and for each of the last 7 delivery dates ("—" when none). | Service quality trend. |
 Not shown: money, kitchen unit detail (only per-drop readiness).
 

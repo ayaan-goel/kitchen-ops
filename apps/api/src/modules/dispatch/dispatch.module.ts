@@ -9,6 +9,6 @@ import { DropService } from './drop.service';
 @Module({
   controllers: [DispatchController, DriverController],
   providers: [DropService, DispatchService],
-  exports: [DropService],
+  exports: [DropService, DispatchService],
 })
 export class DispatchModule {}

@@ -17,6 +17,7 @@ import { FilesModule } from './modules/files/files.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { CatalogueModule } from './modules/catalogue/catalogue.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { KitchenModule } from './modules/kitchen/kitchen.module';
 import { OrderingModule } from './modules/ordering/ordering.module';
 import { SettingsModule } from './modules/settings/settings.module';
@@ -60,6 +61,7 @@ import { MetaController } from './modules/meta/meta.controller';
     KitchenModule,
     CatalogueModule,
     AdminModule,
+    DashboardModule,
   ],
   controllers: [HealthController, MetaController],
   providers: [

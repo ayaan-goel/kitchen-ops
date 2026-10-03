@@ -10,3 +10,4 @@ export * from './schemas/dispatch-dto';
 export * from './schemas/billing-dto';
 export * from './schemas/catalogue-dto';
 export * from './schemas/admin-dto';
+export * from './schemas/dashboard-dto';

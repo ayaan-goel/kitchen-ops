@@ -10,5 +10,6 @@ import { ReferenceService } from './reference.service';
   imports: [OrderingModule],
   controllers: [CatalogueController, PricingController, MenuAdminController],
   providers: [ReferenceService, CatalogueService, PricingService, MenuAdminService],
+  exports: [PricingService],
 })
 export class CatalogueModule {}
