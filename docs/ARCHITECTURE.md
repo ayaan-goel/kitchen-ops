@@ -110,7 +110,7 @@ Trust boundary: **everything in the browser is untrusted**. The API re-validates
 │        │  ├─ (app)/layout.tsx           AppShell: sidebar from route manifest, kitchen clock, AuthGate
 │        │  ├─ (app)/dashboard/ orders/ kitchen/ dispatch/ catalogue/ menu/ pricing/
 │        │  │      companies/ employees/ billing/ settings/ staff/ reference-data/
-│        │  └─ (driver)/driver/           mobile layout, no sidebar
+│        │  └─ (app)/driver/              phone-first page in the shared shell
 │        ├─ features/<area>/              components · query & mutation hooks · forms
 │        ├─ components/ui/                shadcn/ui primitives
 │        ├─ components/common/            DataTable · PageHeader · StatusBadge · Money · KitchenTime · EmptyState
@@ -214,7 +214,7 @@ flowchart LR
 - **Mutations:** optimistic for kitchen and dispatch actions, rolled back on 409 with the server's message.
 - **Forms:** react-hook-form + zodResolver using the **same** schemas the API validates with. Server errors map onto fields by path.
 - **Order configurator:** nested field arrays (lines → combinations → selections). Live breakdown from `POST /api/orders/quote`, so the browser never does price maths.
-- **Driver area:** separate `(driver)` layout, mobile-first, large targets, on-device image compression.
+- **Driver area:** `/driver` inside the shared app shell (the shell collapses to a top bar + menu sheet on phones, so drivers keep their dashboard link). Phone-first page: one column, 48 px primary buttons, a bottom sheet for "Mark delivered", on-device image compression (longest side 1600 px, JPEG 80 %).
 - **Formatting:** money from cents through `formatCents`. Times through `formatKitchen(iso)` with the kitchen zone. The UI never derives "today" from the browser clock.
 
 ## 8. Shared contracts

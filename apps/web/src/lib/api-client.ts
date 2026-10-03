@@ -26,6 +26,8 @@ interface RequestOptions {
  */
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, signal } = options;
+  // FormData (file uploads) goes as multipart; the browser sets the boundary header itself.
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
   let res: Response;
   try {
     res = await fetch(`/api${path}`, {
@@ -35,9 +37,9 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
       headers: {
         Accept: 'application/json',
         'X-Requested-With': 'fetch',
-        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(body !== undefined && !isForm ? { 'Content-Type': 'application/json' } : {}),
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: isForm ? body : body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
     throw new ApiError(0, 'NETWORK', 'Cannot reach the server. Check your connection and try again.');

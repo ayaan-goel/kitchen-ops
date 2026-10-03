@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useKitchenBoard, useUnitAction } from '@/features/kitchen/api';
-import { DateNav } from '@/features/kitchen/date-nav';
+import { DateNav } from '@/components/date-nav';
 import { UnitCard } from '@/features/kitchen/unit-card';
 import { hasPermission, useMe } from '@/lib/auth';
 import { formatKitchen, useMeta } from '@/lib/kitchen-time';
