@@ -1,7 +1,7 @@
 'use client';
 
 import type { OrderDetailDto } from '@fernleaf/shared';
-import { ArrowLeft, Ban, Clock, Loader2, MapPin, Package, Pencil, Send, Truck, XCircle } from 'lucide-react';
+import { ArrowLeft, Ban, ChefHat, Clock, Loader2, MapPin, Package, Pencil, Send, Truck, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useForceComplete } from '@/features/kitchen/api';
 import { useOrder, useOrderAction } from '@/features/orders/api';
 import { DeliveryOverrideDialog, ReasonDialog } from '@/features/orders/order-actions';
 import { ApiError } from '@/lib/api-client';
@@ -66,6 +67,18 @@ function Actions({ order }: { order: OrderDetailDto }) {
   const open = order.status === 'DRAFT' || order.status === 'PLACED';
   const editable = (open && (!order.locked || canOverride) && canWrite) || (order.status === 'CONFIRMED' && canOverride);
 
+  const forceComplete = useForceComplete(order.id);
+  const canForce = hasPermission(me, 'kitchen.forceComplete') && order.status === 'CONFIRMED' && !order.kitchenReadyAt;
+
+  const markReady = async () => {
+    try {
+      await forceComplete.mutateAsync();
+      toast.success('All prep units marked done');
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Could not complete the order');
+    }
+  };
+
   const place = async () => {
     try {
       await action.mutateAsync({ kind: 'place', version: order.version });
@@ -87,6 +100,11 @@ function Actions({ order }: { order: OrderDetailDto }) {
       {order.status === 'DRAFT' && canWrite && (
         <Button onClick={place} disabled={action.isPending}>
           {action.isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Place
+        </Button>
+      )}
+      {canForce && (
+        <Button variant="outline" onClick={markReady} disabled={forceComplete.isPending}>
+          {forceComplete.isPending ? <Loader2 className="size-4 animate-spin" /> : <ChefHat className="size-4" />} Mark kitchen-ready
         </Button>
       )}
       {order.status === 'CONFIRMED' && canOverride && (
