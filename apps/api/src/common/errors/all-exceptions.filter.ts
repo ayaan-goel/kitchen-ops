@@ -9,6 +9,7 @@ const STATUS_TO_CODE: Record<number, ErrorCode> = {
   403: 'FORBIDDEN',
   404: 'NOT_FOUND',
   409: 'CONFLICT_STALE',
+  413: 'VALIDATION_FAILED',
   429: 'RATE_LIMITED',
 };
 

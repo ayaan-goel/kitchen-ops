@@ -442,17 +442,18 @@ forceComplete(orderId, admin): lock; CONFIRMED; mark all undone units done (star
 | Method | Path | Perm | Notes |
 |---|---|---|---|
 | GET | `/api/dispatch/drops` | `dispatch.read` | `?date` (default today) → drops with stage, readiness (`readyOrders/totalOrders`), boxes, driver, planned dispatch-ready, risk, instructions |
-| GET | `/api/dispatch/drops/:id` | `dispatch.read` | Member orders with their kitchen status |
-| GET | `/api/dispatch/drivers` | `dispatch.read` | Assignable drivers (permission-based) + today's load |
-| PATCH | `/api/dispatch/drops/:id/driver` | `dispatch.manage` | `{ driverId \| null }`. Only in `PENDING`/`DISPATCH_READY`. |
+| GET | `/api/dispatch/drops/:id` | `dispatch.read` | Same drop shape (every drop carries its member orders with their kitchen status) |
+| GET | `/api/dispatch/drivers` | `dispatch.read` | `?date`. Assignable drivers (active staff whose role grants `deliveries.own`) + their drops / open drops that day |
+| PATCH | `/api/dispatch/drops/:id/driver` | `dispatch.manage` | `{ driverId \| null }`. Only in `PENDING`/`DISPATCH_READY` (else `DROP_DEPARTED`). A non-driver → 422 on `driverId`. Event `DRIVER_ASSIGNED`. |
 | POST | `/api/dispatch/drops/:id/dispatch-ready` | `dispatch.manage` | Requires every member order kitchen-ready (`DROP_NOT_READY`) |
 | POST | `/api/dispatch/drops/:id/out-for-delivery` | `dispatch.manage` | Requires `DISPATCH_READY` + driver (`DRIVER_REQUIRED`) |
-| POST | `/api/dispatch/drops/:id/delivered` | `dispatch.manage` | On the driver's behalf: `{ note?, photoId? }` |
+| POST | `/api/dispatch/drops/:id/delivered` | `dispatch.manage` | On the driver's behalf: `{ note?, photoId? }`. A photo can only be attached by whoever uploaded it, and only once. |
 
 `DropService` (used by ordering, cut-off and overrides):
 - `attach(order)`: upsert the drop by key. On create, `driverId = company.defaultDriverId`. If the drop is `OUT_FOR_DELIVERY`/`DELIVERED` → `DROP_DEPARTED`. If it is `DISPATCH_READY` → reset to `PENDING` (A-27).
-- `detach(order)`: clear `order.dropId`. Delete the drop if it is now empty and still `PENDING`.
-- `deliver(drop, actor, note, photoId)`: compare-and-set `OUT_FOR_DELIVERY → DELIVERED`, `deliveredAt = now`, `deliveredOnTime = isOnTime(…)`. Member orders become `DELIVERED` with `deliveredAt`, plus events.
+- `detach(order)`: clear `order.dropId`. Delete the drop if it is now empty and hasn't left (`PENDING`/`DISPATCH_READY`). Boards hide drops with no live orders.
+- Transitions (`markDispatchReady`, `markOutForDelivery`, `deliver`, `assignDriver`) each run in one transaction: `SELECT … FOR UPDATE` on the drop row, a stage check (wrong or repeated step → 409 `INVALID_TRANSITION`), the write, and one order event per member order. Two dispatchers pressing the same button → one 200, one 409.
+- `deliver(drop, actor, note, photoId)`: `OUT_FOR_DELIVERY → DELIVERED`, `deliveredAt = now`, `deliveredOnTime = isOnTime(now, deliveryAt, onTimeGraceMinutes)` (recorded once), `deliveredById`. Member orders go `CONFIRMED → DELIVERED` by compare-and-set (an order cancelled at the same moment stays cancelled), with `version + 1` and event `DELIVERED {onTime}`.
 
 ### 6.12 Driver (DSP-06…09)
 | Method | Path | Perm | Notes |
@@ -462,10 +463,10 @@ forceComplete(orderId, admin): lock; CONFIRMED; mark all undone units done (star
 | POST | `/api/driver/drops/:id/photo` | `deliveries.own` | multipart image ≤ 5 MB (JPEG/PNG/WebP, magic bytes checked) → `{ photoId }` |
 | POST | `/api/driver/drops/:id/delivered` | `deliveries.own` | `{ note?, photoId? }` |
 
-Scope check on every call: `drop.driverId === user.id && drop.deliveryDate === today`. Anything else returns **404**.
+Scope check on every call: `drop.driverId === user.id && drop.deliveryDate === today`. Anything else returns **404**. The driver check is repeated under the drop row lock, so a drop reassigned mid-request is also a 404.
 
 ### 6.13 Files
-`GET /api/files/:id` (authenticated). A delivery photo is readable with `dispatch.read` or by the drop's own driver. `Cache-Control: private, max-age=3600`. Bytes live in `StoredFile` (A-35) behind a `FileStore` interface (`put/get`), so S3/R2 can replace Postgres later without touching callers.
+`GET /api/files/:id` (authenticated). A delivery photo is readable with `dispatch.read`, by the drop's own driver, or by its uploader (before it is attached). Anything else gets a 404. Dish images are readable by any signed-in user. Uploads over the size limit get 413 `VALIDATION_FAILED`. `Cache-Control: private, max-age=3600`. Bytes live in `StoredFile` (A-35) behind a `FileStore` interface (`put/get`), so S3/R2 can replace Postgres later without touching callers.
 
 ### 6.14 Billing (BIL)
 | Method | Path | Perm | Notes |
