@@ -26,6 +26,8 @@ An internal admin panel for **Fernleaf Kitchen**, which cooks boxed corporate lu
 | Dispatch | `dispatch@test.com` | `Test@1234` | Dispatch dashboard → drops board |
 | Driver | `driver@test.com` | `Test@1234` | “My day” → today’s drops (try it on a phone) |
 
+The sign-in page lists these four as one-click demo profiles that fill in the form.
+
 **The data is alive on whatever day you look.** A generator keeps the last two weeks, today and the next week filled with realistic orders, all priced and validated by the same rules as the app. An autopilot moves them along by the clock: units get cooked, drops leave and are delivered, and older weeks are invoiced. Wednesdays carry about 400 orders. Today’s drops for `driver@test.com` wait at “dispatch-ready”, so you can pick them up and deliver them yourself. Anything a person touches is left alone by the autopilot.
 
 Things to try:

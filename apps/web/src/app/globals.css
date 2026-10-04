@@ -3,73 +3,79 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * "Peacock & saffron" — Fernleaf's own palette (Hyderabad: peacock-blue tiles, saffron, paper).
+ * Peacock teal = actions; saffron = brand accent, used sparingly; warm paper pages; dark ink sidebar.
+ * Status colours (late / at risk / on time) are kept apart from the brand hues and always carry a label.
+ */
 :root {
-  --radius: 0.6rem;
-  --background: oklch(0.99 0.003 120);
-  --foreground: oklch(0.2 0.02 150);
+  --radius: 0.7rem;
+  --background: oklch(0.982 0.007 85);
+  --foreground: oklch(0.23 0.025 240);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.02 150);
+  --card-foreground: oklch(0.23 0.025 240);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.02 150);
-  /* Fernleaf green */
-  --primary: oklch(0.45 0.11 155);
-  --primary-foreground: oklch(0.98 0.01 150);
-  --secondary: oklch(0.96 0.01 150);
-  --secondary-foreground: oklch(0.25 0.03 150);
-  --muted: oklch(0.96 0.008 140);
-  --muted-foreground: oklch(0.5 0.02 150);
-  --accent: oklch(0.95 0.02 150);
-  --accent-foreground: oklch(0.25 0.03 150);
-  --destructive: oklch(0.58 0.22 27);
-  --border: oklch(0.91 0.01 140);
-  --input: oklch(0.91 0.01 140);
-  --ring: oklch(0.55 0.11 155);
-  --sidebar: oklch(0.975 0.008 140);
-  --sidebar-foreground: oklch(0.25 0.02 150);
-  --sidebar-primary: oklch(0.45 0.11 155);
-  --sidebar-primary-foreground: oklch(0.98 0.01 150);
-  --sidebar-accent: oklch(0.93 0.025 150);
-  --sidebar-accent-foreground: oklch(0.22 0.03 150);
-  --sidebar-border: oklch(0.91 0.01 140);
-  --sidebar-ring: oklch(0.55 0.11 155);
-  /* Operational status colours (always paired with text labels) */
-  --status-late: oklch(0.58 0.22 27);
-  --status-risk: oklch(0.75 0.16 70);
-  --status-ok: oklch(0.6 0.14 155);
+  --popover-foreground: oklch(0.23 0.025 240);
+  --primary: oklch(0.47 0.085 205);
+  --primary-foreground: oklch(0.985 0.005 85);
+  --secondary: oklch(0.955 0.012 85);
+  --secondary-foreground: oklch(0.27 0.03 230);
+  --muted: oklch(0.955 0.01 85);
+  --muted-foreground: oklch(0.5 0.022 240);
+  --accent: oklch(0.945 0.022 200);
+  --accent-foreground: oklch(0.26 0.04 215);
+  --destructive: oklch(0.56 0.2 27);
+  --border: oklch(0.9 0.013 85);
+  --input: oklch(0.88 0.015 85);
+  --ring: oklch(0.55 0.09 205);
+  --brand: oklch(0.75 0.15 62);
+  --brand-foreground: oklch(0.24 0.04 230);
+  --sidebar: oklch(0.255 0.035 222);
+  --sidebar-foreground: oklch(0.93 0.012 85);
+  --sidebar-primary: oklch(0.75 0.15 62);
+  --sidebar-primary-foreground: oklch(0.24 0.04 230);
+  --sidebar-accent: oklch(0.33 0.045 215);
+  --sidebar-accent-foreground: oklch(0.99 0.004 85);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.75 0.15 62);
+  --status-late: oklch(0.56 0.2 27);
+  --status-risk: oklch(0.8 0.15 88);
+  --status-ok: oklch(0.57 0.13 150);
 }
 
 .dark {
-  --background: oklch(0.17 0.01 150);
-  --foreground: oklch(0.96 0.01 140);
-  --card: oklch(0.21 0.012 150);
-  --card-foreground: oklch(0.96 0.01 140);
-  --popover: oklch(0.21 0.012 150);
-  --popover-foreground: oklch(0.96 0.01 140);
-  --primary: oklch(0.7 0.13 155);
-  --primary-foreground: oklch(0.18 0.02 150);
-  --secondary: oklch(0.27 0.015 150);
-  --secondary-foreground: oklch(0.96 0.01 140);
-  --muted: oklch(0.27 0.015 150);
-  --muted-foreground: oklch(0.7 0.02 150);
-  --accent: oklch(0.3 0.02 150);
-  --accent-foreground: oklch(0.96 0.01 140);
+  --background: oklch(0.19 0.02 230);
+  --foreground: oklch(0.95 0.01 85);
+  --card: oklch(0.23 0.025 228);
+  --card-foreground: oklch(0.95 0.01 85);
+  --popover: oklch(0.23 0.025 228);
+  --popover-foreground: oklch(0.95 0.01 85);
+  --primary: oklch(0.72 0.1 200);
+  --primary-foreground: oklch(0.18 0.03 230);
+  --secondary: oklch(0.28 0.025 228);
+  --secondary-foreground: oklch(0.95 0.01 85);
+  --muted: oklch(0.28 0.025 228);
+  --muted-foreground: oklch(0.72 0.02 230);
+  --accent: oklch(0.31 0.035 215);
+  --accent-foreground: oklch(0.95 0.01 85);
   --destructive: oklch(0.65 0.2 25);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.6 0.12 155);
-  --sidebar: oklch(0.2 0.012 150);
-  --sidebar-foreground: oklch(0.94 0.01 140);
-  --sidebar-primary: oklch(0.7 0.13 155);
-  --sidebar-primary-foreground: oklch(0.18 0.02 150);
-  --sidebar-accent: oklch(0.28 0.02 150);
-  --sidebar-accent-foreground: oklch(0.96 0.01 140);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.6 0.12 155);
+  --ring: oklch(0.65 0.1 200);
+  --brand: oklch(0.78 0.15 62);
+  --brand-foreground: oklch(0.2 0.03 230);
+  --sidebar: oklch(0.16 0.025 225);
+  --sidebar-foreground: oklch(0.93 0.012 85);
+  --sidebar-primary: oklch(0.78 0.15 62);
+  --sidebar-primary-foreground: oklch(0.2 0.03 230);
+  --sidebar-accent: oklch(0.26 0.04 215);
+  --sidebar-accent-foreground: oklch(0.99 0.004 85);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.78 0.15 62);
   --status-late: oklch(0.68 0.2 25);
-  --status-risk: oklch(0.8 0.15 75);
-  --status-ok: oklch(0.72 0.14 155);
+  --status-risk: oklch(0.82 0.15 88);
+  --status-ok: oklch(0.72 0.14 150);
 }
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -89,6 +95,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -104,8 +112,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-heading), var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'SFMono-Regular', monospace;
 }
 
 @layer base {
@@ -114,5 +123,9 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+  }
+  h1,
+  h2 {
+    @apply font-display;
   }
 }

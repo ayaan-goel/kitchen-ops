@@ -1,10 +1,11 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Clock, Leaf, LogOut, Menu } from 'lucide-react';
+import { Clock, LogOut, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
+import { BrandMark } from '@/components/brand-mark';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -37,7 +38,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
         if (items.length === 0) return null;
         return (
           <div key={group} className="space-y-1">
-            <p className="px-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">{group}</p>
+            <p className="px-2.5 text-[11px] font-semibold tracking-[0.12em] text-sidebar-foreground/50 uppercase">{group}</p>
             {items.map((r) => {
               const active = r.href === activeHref;
               return (
@@ -47,10 +48,10 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                   onClick={onNavigate}
                   aria-current={active ? 'page' : undefined}
                   className={cn(
-                    'flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors',
+                    'relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none',
                     active
-                      ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground'
-                      : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60',
+                      ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground before:absolute before:inset-y-1.5 before:-left-3 before:w-1 before:rounded-r before:bg-sidebar-primary'
+                      : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
                   )}
                 >
                   <r.icon className="size-4 shrink-0" aria-hidden />
@@ -67,11 +68,12 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 
 function Brand() {
   return (
-    <Link href="/dashboard" className="flex items-center gap-2 px-5 py-4 font-semibold tracking-tight">
-      <span className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <Leaf className="size-4" aria-hidden />
+    <Link href="/dashboard" className="flex items-center gap-2.5 px-5 py-5 text-sidebar-foreground">
+      <BrandMark />
+      <span className="leading-tight">
+        <span className="block font-display text-[15px] font-semibold tracking-tight">Fernleaf</span>
+        <span className="block text-[11px] tracking-[0.14em] text-sidebar-foreground/55 uppercase">Kitchen Ops</span>
       </span>
-      Fernleaf Ops
     </Link>
   );
 }
@@ -109,7 +111,7 @@ function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="gap-2 px-2">
-          <span className="flex size-7 items-center justify-center rounded-full bg-secondary text-xs font-medium">
+          <span className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
             {initials}
           </span>
           <span className="hidden text-left text-sm leading-tight sm:block">
@@ -160,19 +162,19 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-dvh">
-      <aside className="hidden w-60 shrink-0 border-r bg-sidebar lg:block">
+      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 overflow-y-auto bg-sidebar lg:block">
         <Brand />
         <NavLinks />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-card/90 px-4 backdrop-blur sm:px-6">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation">
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 bg-sidebar p-0">
+            <SheetContent side="left" className="w-64 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground">
               <SheetTitle className="sr-only">Navigation</SheetTitle>
               <Brand />
               <NavLinks onNavigate={() => setMobileOpen(false)} />
@@ -183,7 +185,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <UserMenu />
           </div>
         </header>
-        <main className="flex-1 px-4 py-6 sm:px-6">{children}</main>
+        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:py-8">{children}</main>
       </div>
     </div>
   );
