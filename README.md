@@ -17,7 +17,7 @@ An internal admin panel for **Fernleaf Kitchen**, which cooks boxed corporate lu
 | | |
 |---|---|
 | App | **https://kitchen-ops-pied.vercel.app** (Vercel) |
-| API health | https://fernleaf-api-s468.onrender.com/api/health/live (Render, Singapore). The free instance may take up to a minute to wake if it has been idle. |
+| API health | https://fernleaf-api-s468.onrender.com/api/health/live (Render, Singapore). An uptime monitor pings it every 5 minutes so the free instance stays awake. |
 
 | Role | Email | Password | Lands on |
 |---|---|---|---|
@@ -49,6 +49,17 @@ pnpm dev                                   # web on :3000, API on :4000
 ```
 
 With `DEMO_DATA_ENABLED=true` the API fills the demo window a few seconds after it starts. `pnpm --filter @fernleaf/api demo:reset -- --yes` wipes orders, drops and invoices; the base seed stays.
+
+## Deployment
+
+| Piece | Where | How |
+|---|---|---|
+| Web | Vercel (`sin1`), project root `apps/web` | `apps/web/vercel.json`; one environment variable, `API_URL`. The browser only calls `/api/*` on the same origin, and Vercel forwards it to the API. |
+| API | Render free web service, Singapore | `render.yaml` blueprint: build with pnpm, start with `prisma migrate deploy` + `node dist/main.js`. Secrets (`DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`) are set in the dashboard only. |
+| Database | Neon PostgreSQL, Singapore | Migrations are applied on API start; the base seed is run once from a dev machine. |
+| Uptime | UptimeRobot | `GET /api/health/live` every 5 minutes (no database query, so the database can idle). |
+
+Every push to `main` redeploys both the web app and the API automatically.
 
 ## Architecture
 
@@ -249,8 +260,13 @@ CI (GitHub Actions) runs lint, typecheck, unit tests and build on every push.
 
 ## Known limitations
 
-- **Hosting:** free tiers (Render, Neon). A cold API can take a few seconds on the first request; an uptime monitor keeps it warm. The dev machine and the deployment share one database, by choice.
-- **Kitchen board scale:** it loads a whole day at once, which is fine for a few hundred orders: about 440 ms for ~500 units measured from India to Singapore, less inside the region.
+- **Hosting:** free tiers (Vercel, Render, Neon). Render’s free instance has little CPU, and if the uptime monitor ever lapses, the first request after a long idle spell can take about a minute. Local development and the deployment share one database, by choice.
+- **Kitchen board scale:** the board loads a whole day at once. Measured on the live site (through Vercel, warm, from India):
+  - a typical day: 0.16 s;
+  - the busiest demo day (~500 prep units): 0.8 s;
+  - dispatch board 0.18 s, orders list 0.12 s, dashboard 0.27 s.
+
+  Well beyond that volume it would need per-station loading or pagination.
 - **Demo data:** demo orders have no human creator; anything you change is yours and the autopilot leaves it alone.
 - **Out of scope:** no email or SMS notifications and no accounting integration.
 
