@@ -232,6 +232,7 @@ The brief leaves a number of things open. Each interpretation is written down, a
   - Hidden beats secret.
   - A dish whose required choice has no priced option is hidden.
   - **No price never means $0:** an item without a price on a company’s tier is not on that company’s menu.
+- **No self sign-up:** this is an internal tool, so staff accounts are created by an admin on the Staff page (name, email, role, initial password). Client companies are onboarded by an admin on the Companies page, and employees never sign in: staff order on their behalf.
 - **Employees:** an employee’s email must be on one of the company’s domains; public mail providers can’t be company domains. Moving an employee needs an email on the new company’s domains. Past orders stay with the old company and their open orders can only be cancelled.
 - **Live data:** the kitchen works 7 days, because two clients (a hospital and a support centre) work weekends, so every review day has operations. Office clients keep Mon–Fri.
 
