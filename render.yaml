@@ -8,8 +8,10 @@ services:
     plan: free
     autoDeploy: true
     # NODE_ENV=production would make pnpm skip devDependencies (TypeScript, Prisma CLI) at build time.
-    buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm turbo run build --filter=@fernleaf/api...
-    startCommand: pnpm --filter @fernleaf/api start:prod
+    # pnpm runs through npx (pinned) because a global corepack/pnpm shim isn't guaranteed at build or
+    # run time on Render; the start command needs only node and the project's own Prisma binary.
+    buildCommand: npx --yes pnpm@10.34.6 install --frozen-lockfile --prod=false && npx --yes pnpm@10.34.6 turbo run build --filter=@fernleaf/api...
+    startCommand: cd apps/api && ./node_modules/.bin/prisma migrate deploy && node --enable-source-maps dist/main.js
     healthCheckPath: /api/health/live
     envVars:
       - key: NODE_VERSION
