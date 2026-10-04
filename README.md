@@ -16,8 +16,8 @@ An internal admin panel for **Fernleaf Kitchen**, which cooks boxed corporate lu
 
 | | |
 |---|---|
-| App | **_link added after deployment_** (Vercel) |
-| API health | `<api>/api/health/live` (Render, Singapore) |
+| App | **https://kitchen-ops-pied.vercel.app** (Vercel) |
+| API health | https://fernleaf-api-s468.onrender.com/api/health/live (Render, Singapore). The free instance may take up to a minute to wake if it has been idle. |
 
 | Role | Email | Password | Lands on |
 |---|---|---|---|
